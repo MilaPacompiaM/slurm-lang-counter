@@ -12,35 +12,36 @@ print("hello from process", rank, "of", size)
 #../files/mastodon-small.ndjson
 file_path = sys.argv[1]
 
+data = None
+lines = []
+number_lines = 0
 if rank == 0:
     print('Rank 0 executing', file_path)
-    with open(file_path) as file_content: 
-        while True:
-            lines = file_content.readlines()
-            if not lines:
-                break
-            s = 0
-            print('lines length', len(lines))
-            number_lines = len(lines)
-            interval_size = int(number_lines / size)
+    with open(file_path) as file_content:
+        lines = file_content.readlines()
+        print('lines length', len(lines))
+        number_lines = len(lines)
 
-            # interval of lines per each node
-            intervals = [
-                (
-                    i * interval_size + int(bool(0)),
-                    number_lines if i == size - 1 else (i + 1) * interval_size
-                ) for i in range(size)]
-            interval_lines = []
-            for start, end in intervals:
-                print('start', start)
-                print('end', end)
-                interval_lines.append(lines[start:end])
-            total_lines = 0
-            for line in interval_lines:
-                print('length interval', len(line))
-                total_lines += len(line)
-            print('check total number of lines', total_lines
-                  )
+number_lines = comm.bcast(number_lines, root=0)
+interval_size = int(number_lines / size)
 
+# interval of lines per each node
+intervals = [
+    (
+        i * interval_size + int(bool(0)),
+        number_lines if i == size - 1 else (i + 1) * interval_size
+    ) for i in range(size)]
+interval_lines = []
+if rank == 0:
+    for start, end in intervals:
+        print('start', start)
+        print('end', end)
+        interval_lines.append(lines[start:end])
 
+node_lines = comm.scatter(interval_lines, root=0)
 
+# Executing for each node
+print('Rank ', rank, ' has ', len(node_lines), 'elems')
+
+if rank == 0:
+    print('end')

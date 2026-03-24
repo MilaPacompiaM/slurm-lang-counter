@@ -26,11 +26,13 @@ number_lines = comm.bcast(number_lines, root=0)
 interval_size = int(number_lines / size)
 
 # interval of lines per each node
+# TODO: make this calculation in each node and assign more items to first n-1 process by default
 intervals = [
     (
         i * interval_size + int(bool(0)),
         number_lines if i == size - 1 else (i + 1) * interval_size
     ) for i in range(size)]
+
 interval_lines = []
 if rank == 0:
     for start, end in intervals:

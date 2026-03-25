@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+
+# Data files (VERY IMPORTANT)
+data/
+*.ndjson
+
+# Output files
+results/
+*.out
+*.err
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+

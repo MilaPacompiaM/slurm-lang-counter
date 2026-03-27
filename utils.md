@@ -39,7 +39,7 @@ sbatch getLangRankRe.slurm
 mpirun -np 2 python3 getLangRank.py ../files/mastodon-small.ndjson
 ```
 
-## History
+## Executions
 - Test of Small files
 
 ```sh
@@ -54,3 +54,12 @@ Submitted batch job 23304920
 Submitted batch job 23304921
 # out
 ```
+
+- Get stats about jobs
+```sh
+sacct -j 23304920 -l
+```
+
+## TODO
+
+- Check language data is not corrupted e.g. 'ENGLL', 'franch'.

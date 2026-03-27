@@ -65,10 +65,11 @@ for i in range(size):
 
 
 if rank == 0:
-    for start, end in intervals:
-        print('start', start)
-        print('end', end)
-        interval_lines.append(lines[start:end])
+    interval_lines = [lines[start:end] for start, end in intervals]
+    # for start, end in intervals:
+    #     print('start', start)
+    #     print('end', end)
+    #     interval_lines.append(lines[start:end])
 
 #node_lines = comm.scatter(interval_lines, root=0)
 if rank == 0:
@@ -104,7 +105,7 @@ for idx, node_line in enumerate(node_lines):
         lang_value = post["lang"]
 
     # Skip missing or null values
-    if lang_value is None:
+    if not lang_value:
         continue
     # Case 1: single language string
     if isinstance(lang_value, str):

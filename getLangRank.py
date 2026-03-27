@@ -99,11 +99,24 @@ for idx, node_line in enumerate(node_lines):
 
     # Check both possible field names
     lang_value = None
+
+    # Mastodon / possible top-level fields
     if "language" in post:
         lang_value = post["language"]
     elif "lang" in post:
         lang_value = post["lang"]
+    elif "langs" in post:
+        lang_value = post["langs"]
 
+    # BlueSky nested fields
+    elif "record" in post and isinstance(post["record"], dict):
+        record = post["record"]
+        if "language" in record:
+            lang_value = record["language"]
+        elif "lang" in record:
+            lang_value = record["lang"]
+        elif "langs" in record:
+            lang_value = record["langs"]
     # Skip missing or null values
     if not lang_value:
         continue
@@ -138,7 +151,6 @@ all_counters = comm.gather(counter, root=0)
 
 
 #all_counters = comm.gather(counter, root=0)
-
 if rank == 0:
     print('all_counters', all_counters)
     

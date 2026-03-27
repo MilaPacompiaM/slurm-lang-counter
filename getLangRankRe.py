@@ -49,27 +49,31 @@ node_lines = comm.scatter(interval_lines, root=0)
 
 # Executing for each node
 print('Rank ', rank, ' has ', len(node_lines), 'elems')
-language_regex = r'("language")\s*(:)(\s*)(("([^"]*)")|\[.*\])(\s*),(\s*)'
-langs_regex = r'("langs")\s*(:)(\s*)(("([^"]*)")|\[\s*"[^"]*"(?:\s*,\s*"[^"]*")*\s*\])(\s*),(\s*)'
+# language_regex = r'("language")\s*(:)(\s*)(("([^"]*)")|\[.*\])(\s*),(\s*)'
+langs_regex = r'("langs"|"language")\s*(:)(\s*)(("([^"]*)")|\[\s*"[^"]*"(?:\s*,\s*"[^"]*")*\s*\])(\s*),(\s*)'
+string_array_regex = r'\[\s*"[^"]*"(?:\s*,\s*"[^"]*")*\s*\]'
 string_regex = r'"([^"]*)"'
-string_array_regex = r''
+# string_array_regex = r''
 counter = Counter()
 
 for idx, node_line in enumerate(node_lines):
-    match_result = re.search(language_regex, node_line)
+    # TODO: join match_result and match_result_langs logic
+    match_result = re.search(langs_regex, node_line)
+    # match_result_langs = re.search(langs_regex, node_line)
     if match_result:
         value = match_result.group(4)
         print('value', value)
         if value:
+            array_string_value = re.search(string_array_regex, value)
             string_value = re.search(string_regex, value)
-            print('string_value', string_value.group(1))
-            counter.update([string_value.group(1)])
-    match_result_langs = re.search(langs_regex, node_line)
-    if match_result_langs:
-        value = match_result_langs.group(4)
-        if value:
-            array_strings = json.loads(value)
+            array_strings = json.loads(value) if array_string_value else [string_value.group(1)]
+            # print('string_value', string_value.group(1))
             counter.update(array_strings)
+    # elif match_result_langs:
+    #     value = match_result_langs.group(4)
+    #     if value:
+    #         array_strings = json.loads(value)
+    #         counter.update(array_strings)
         # print('array_strings', array_strings)
 
 

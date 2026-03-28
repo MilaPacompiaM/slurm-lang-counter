@@ -44,20 +44,28 @@ mpirun -np 2 python3 getLangRank.py ../files/mastodon-small.ndjson
 
 ```sh
 # mastodon
+# small
 Submitted batch job 23304920
-# out
+# medium
+Submitted batch job 23305143
 
 ```
 
 ```sh
 # bluesky
+# small
 Submitted batch job 23304921
-# out
+# medium
+Submitted batch job 23305088
+
 ```
 
 - Get stats about jobs
 ```sh
-sacct -j 23304920 -l
+sacct -j <JOB_ID> -l
+# save it
+sacct -j <JOB_ID> -l > stats-<JOB_ID>.txt
+
 ```
 
 ## TODO

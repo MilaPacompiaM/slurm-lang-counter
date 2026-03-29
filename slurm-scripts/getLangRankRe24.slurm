@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=getLangRankRe
-#SBATCH --nodes=1
-#SBATCH --ntasks=2
+#SBATCH --nodes=2
+#SBATCH --ntasks=8
+#SBATCH --ntasks-per-node=4
 #SBATCH --time=00:10:00
 #SBATCH --output=slurm-%j.out
 
@@ -9,9 +10,4 @@
 module load OpenMPI/4.1.4
 module load mpi4py/3.1.4
 
-mpirun -np 2 python3 getLangRankRe.py "$1"
-
-
-# mpirun -np 2 python3 getLangRank.py
-
-# my-job-stats -a -n -s
+mpirun -np 8 python3 getLangRankRe.py "$1"

@@ -66,13 +66,13 @@ for idx, node_line in enumerate(node_lines):
     # Check both possible field names
     lang_value = None
 
-    # Check top-level first
-    for key in ["lamgauge", "lang", "langs"]:
+    # Check top-level first (Mastodon)
+    for key in ["langauge", "lang", "langs"]:
         if key in post: 
             lang_value = post[key]
             break
 
-    #Check nested reocrd
+    #Check nested reocrd (BlueSky)
     if lang_value is None and "record" in post: 
         record = post["record"]
         if isinstance(record, dict): 
@@ -83,25 +83,9 @@ for idx, node_line in enumerate(node_lines):
 
     
     if idx < 5: 
+        print("POST KEYS:", post.keys())
         print("LANG VALUE:" , lang_value)
-        
- #   # Mastodon / possible top-level fields
- #   if "language" in post:
- #       lang_value = post["language"]
- #   elif "lang" in post:
- #       lang_value = post["lang"]
- #   elif "langs" in post:
- #       lang_value = post["langs"]
 
- #   # BlueSky nested fields
- #   elif "record" in post and isinstance(post["record"], dict):
- #       record = post["record"]
- #       if "language" in record:
- #           lang_value = record["language"]
- #       elif "lang" in record:
- #           lang_value = record["lang"]
- #       elif "langs" in record:
- #           lang_value = record["langs"]
 
     # Skip missing or null values
     if lang_value is None:

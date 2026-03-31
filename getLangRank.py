@@ -66,11 +66,20 @@ for idx, node_line in enumerate(node_lines):
     # Check both possible field names
     lang_value = None
 
-    # Check top-level first (Mastodon)
+    # Top-level first 
     for key in ["langauge", "lang", "langs"]:
         if key in post: 
             lang_value = post[key]
             break
+
+    #Nested record (Mastodon)
+    if lang_value is None and "doc" in post:
+        doc = post["doc"]
+        if isinstance(doc, dict):
+            for key in ["language", "lang", "langs"]:
+                if key in doc:
+                    lang_value = doc[key]
+                    break
 
     #Check nested reocrd (BlueSky)
     if lang_value is None and "record" in post: 

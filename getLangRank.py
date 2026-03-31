@@ -1,9 +1,10 @@
 import sys
 import json
+import time
 from collections import Counter
 from mpi4py import MPI
 
-
+start_time = time.time()
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size() 
@@ -115,16 +116,14 @@ for idx, node_line in enumerate(node_lines):
                     valid_langs.append(item)
         counter.update(valid_langs)
 
-    # Any other format is ignored safely
+end_time = time.time()
+
+# Any other format is ignored safely
 all_counters = comm.gather(counter, root=0)
-
-
 
 #all_counters = comm.gather(counter, root=0)
 if rank == 0:
     print('all_counters', all_counters)
-    
-if rank == 0:
     global_counter = Counter()
     for iter_counter in all_counters:
         global_counter.update(iter_counter)
@@ -132,3 +131,7 @@ if rank == 0:
     print('ANSWER')
     print(global_counter.most_common(10))
     print('end')
+    
+    print("Excution time: ", end_time - start_time)
+    
+

@@ -85,5 +85,8 @@ if rank == 0:
     for iter_counter in all_counters:
         global_counter.update(iter_counter)
     print('ANSWER')
-    print(global_counter.most_common(10))
+    most_common_lang = global_counter.most_common(10)
+    print('Language Used', 'Frequency of occurence (#posts)')
+    for i in most_common_lang:
+        print('{}, {}'.format(i[0], i[1]))
     print('end')

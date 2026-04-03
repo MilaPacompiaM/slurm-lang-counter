@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=getLangRank
+#SBATCH --partition=sapphire
 #SBATCH --nodes=2
 #SBATCH --ntasks=8
 #SBATCH --ntasks-per-node=4

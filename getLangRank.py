@@ -1,6 +1,7 @@
 import sys
 import json
 import time
+import os
 from collections import Counter
 from mpi4py import MPI
 
@@ -8,8 +9,6 @@ start_time = time.time()
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size() 
-
-print("hello from process", rank, "of", size)
 
 #handle IndexError if no filename is passed
 if len(sys.argv) < 2:
@@ -19,44 +18,29 @@ if len(sys.argv) < 2:
 
 file_path = sys.argv[1]
 
-lines = []
-number_lines = 0
+file_size = os.path.getsize(file_path)
 
-if rank == 0:
-    print('Rank 0 executing', file_path)
-    with open(file_path) as file_content:
-        lines = file_content.readlines()
-        print('lines length', len(lines))
-        number_lines = len(lines)
-
-number_lines = comm.bcast(number_lines, root=0)
-
-#spread leftovers more evenly
-interval_size = number_lines // size
-remainder = number_lines % size
-
-intervals = []
-start = 0
-for i in range(size):
-    extra = 1 if i < remainder else 0
-    end = start + interval_size + extra
-    intervals.append((start, end))
-    start = end
-
-
-if rank == 0:
-    interval_lines = [lines[start:end] for start, end in intervals]
-    scatter_data = interval_lines
-else:
-    scatter_data = None
-
-node_lines = comm.scatter(scatter_data, root=0)
-
-
-# Executing for each node
-print('Rank ', rank, ' has ', len(node_lines), 'elems')
+# Each rank is responsible for a byte range of the file
+start_byte = rank * file_size // size
+end_byte = (rank + 1) * file_size // size
 
 counter = Counter()
+node_lines = []
+with open(file_path, 'rb') as f:
+    # If not rank 0, skip the partial line at the boundary to avoid double-counting
+    if start_byte > 0:
+        f.seek(start_byte - 1)
+        f.readline()  # advance to the start of the next complete line
+
+    while True:
+        pos = f.tell()
+        if pos >= end_byte:
+            break
+        line_bytes = f.readline()
+        if not line_bytes:
+            break
+        node_lines.append(line_bytes.decode('utf-8', errors='replace'))
+
 for idx, node_line in enumerate(node_lines):
     try:
         post = json.loads(node_line)
@@ -92,9 +76,10 @@ for idx, node_line in enumerate(node_lines):
                     break
 
     
-    if idx < 5: 
-        print("POST KEYS:", post.keys())
-        print("LANG VALUE:" , lang_value)
+    if idx < 5:
+        pass 
+        # print("POST KEYS:", post.keys())
+        # print("LANG VALUE:" , lang_value)
 
 
     # Skip missing or null values
@@ -123,18 +108,17 @@ all_counters = comm.gather(counter, root=0)
 
 #all_counters = comm.gather(counter, root=0)
 if rank == 0:
-    print('all_counters', all_counters)
+    # print('all_counters', all_counters)
     global_counter = Counter()
     for iter_counter in all_counters:
         global_counter.update(iter_counter)
 
-    print('ANSWER')
+    # print('ANSWER')
     most_common_lang = global_counter.most_common(10)
-    print('Language Used', 'Frequency of occurence (#posts)')
+    print('Language Used, Frequency of occurence (#posts)')
     for i in most_common_lang:
         print('{}, {}'.format(i[0], i[1]))
-    print('end')
+    # print('end')
     
-    print("Excution time: ", end_time - start_time)
+    # print("Excution time: ", end_time - start_time)
     
-

@@ -1,6 +1,5 @@
 import sys
 import json
-import os
 from collections import Counter
 from mpi4py import MPI
 
@@ -12,75 +11,98 @@ size = comm.Get_size()
 start_time = MPI.Wtime()
 
 
-#handle IndexError if no filename is passed
-if len(sys.argv) < 2:
+#check command-line argument
+if len(sys.argv) < 2 or not sys.argv[1].strip():
     if rank == 0:
         print("Usage: python3 getLangRank.py <file_path>")
     sys.exit(1)
 
 file_path = sys.argv[1]
-file_size = os.path.getsize(file_path)
 
-# Each rank is responsible for a byte range of the file
-start_byte = rank * file_size // size
-end_byte = (rank + 1) * file_size // size
+lines = None
+number_lines = 0
 
+ # rank 0 reads the whole file
+if rank == 0: 
+    try:
+        with open(file_path, "r", encoding="utf-8") as file_content: 
+            lines = file_content.readlines()
+            number_lines = len(lines)
+    except FileNotFoundError:
+        print(f"Error: file not found: {file_path}")
+        number_lines = -1
+    except Exception as e:
+        print(f"Error opening file {e}")
+        number_lines = -1
+
+#Brodcats number of lines
+number_lines = comm.bcast(number_lines, root=0)
+
+if number_lines == -1: 
+    sys.exit(1)
+
+#Split lines evenly across processes
+interval_size = number_lines // size
+remainder = number_lines % size
+
+intervals = []
+start = 0
+for i in range(size): 
+    extra = 1 if i < remainder else 0
+    end = start + interval_size + extra
+    intervals.append((start, end))
+    start = end
+
+#prepare chunks on ranks 0
+if  rank == 0: 
+    scatter_data = [lines[start:end] for start, end in intervals]
+
+else: 
+    scatter_data = None
+
+#scatter line chunks
+node_lines =  comm.scatter(scatter_data, root=0)
+
+# Local counting
 counter = Counter()
 
-with open(file_path, 'rb') as f:
-    # If not rank 0, skip the partial line at the boundary to avoid double-counting
-    if start_byte > 0:
-        f.seek(start_byte - 1)
-        f.readline()  # advance to the start of the next complete line
+for node_line in node_lines:
+    try:
+        post = json.loads(node_line)
+    except json.JSONDecodeError:
+        # Skip bad JSON lines safely
+        continue
+    # Check both possible field names
+    lang_value = None
 
-    while True:
-        pos = f.tell()
-        if pos >= end_byte:
+    # Top-level fields 
+    for key in ["language", "lang", "langs"]:
+        if key in post: 
+            lang_value = post[key]
             break
 
-        line_bytes = f.readline()
-        if not line_bytes:
-            break
+    #Nested record (Mastodon)
+    if lang_value is None and "doc" in post:
+        doc = post["doc"]
+        if isinstance(doc, dict):
+            for key in ["language", "lang", "langs"]:
+                if key in doc:
+                    lang_value = doc[key]
+                    break
 
-        node_line = line_bytes.decode('utf-8', errors='replace')
-
-        try:
-            post = json.loads(node_line)
-        except json.JSONDecodeError:
-            # Skip bad JSON lines safely
-            continue
-
-        # Check both possible field names
-        lang_value = None
-
-        # Top-level fields 
-        for key in ["language", "lang", "langs"]:
-            if key in post: 
-                lang_value = post[key]
-                break
-
-        #Nested record (Mastodon)
-        if lang_value is None and "doc" in post:
-            doc = post["doc"]
-            if isinstance(doc, dict):
-                for key in ["language", "lang", "langs"]:
-                    if key in doc:
-                        lang_value = doc[key]
-                        break
-
-        #Check nested reocrd (BlueSky)
-        if lang_value is None and "record" in post: 
-            record = post["record"]
-            if isinstance(record, dict): 
-                for key in ["language", "lang", "langs"]: 
-                    if key in record:
-                        lang_value = record[key]
-                        break
-        
-        # Skip missing or null values
-        if lang_value is None:
-            continue
-        
+    #Check nested reocrd (BlueSky)
+    if lang_value is None and "record" in post: 
+        record = post["record"]
+        if isinstance(record, dict): 
+            for key in ["language", "lang", "langs"]: 
+                if key in record:
+                    lang_value = record[key]
+                    break
+    
+    # Skip missing or null values
+    if lang_value is None:
+        continue
+    
 
     # Case 1: single language string
     if isinstance(lang_value, str):
@@ -101,7 +123,7 @@ with open(file_path, 'rb') as f:
 #Gather all counters at rank 0
 all_counters = comm.gather(counter, root=0)
 
-#Make sure all ranks at 0
+#synchronize all ranks
 comm.Barrier()
 end_time = MPI.Wtime()
 
@@ -111,7 +133,7 @@ if rank == 0:
         global_counter.update(iter_counter)
 
     most_common_lang = global_counter.most_common()
-    print('Language Used, Frequency of occurrence (#posts)')
+    print("Language Used, Frequency of occurrence (#posts)")
     for lang, count in most_common_lang:
         print(f"{lang}, {count}")
     

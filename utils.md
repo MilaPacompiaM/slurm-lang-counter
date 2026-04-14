@@ -8,12 +8,12 @@ scp -r /{PATH_TO_DIRECTORY}/team-11-scripts {YOUR_USERNAME}@spartan.hpc.unimelb.
 
 # next lines should be executed in SPARTAN
 cd team-11-scripts
-sbatch --job-name=M_L_c11 getLangRankRe11.slurm mastodon-large.ndjson
-sbatch --job-name=M_L_c18 getLangRankRe18.slurm mastodon-large.ndjson
-sbatch --job-name=M_L_c24 getLangRankRe24.slurm mastodon-large.ndjson
-sbatch --job-name=B_L_c11 getLangRankRe11.slurm bluesky-large.ndjson
-sbatch --job-name=B_L_c18 getLangRankRe18.slurm bluesky-large.ndjson
-sbatch --job-name=B_L_c24 getLangRankRe24.slurm bluesky-large.ndjson
+sbatch --job-name=M_L_c11 getLangRankRe11.slurm ../mastodon-large.ndjson
+sbatch --job-name=M_L_c18 getLangRankRe18.slurm ../mastodon-large.ndjson
+sbatch --job-name=M_L_c24 getLangRankRe24.slurm ../mastodon-large.ndjson
+sbatch --job-name=B_L_c11 getLangRankRe11.slurm ../bluesky-large.ndjson
+sbatch --job-name=B_L_c18 getLangRankRe18.slurm ../bluesky-large.ndjson
+sbatch --job-name=B_L_c24 getLangRankRe24.slurm ../bluesky-large.ndjson
 ```
 
 - Check my jobs' status

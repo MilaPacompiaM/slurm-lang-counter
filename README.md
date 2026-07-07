@@ -1,5 +1,8 @@
 # comp90024_a1_team_11
 
+## Contributors
+- Bothainah Sharrofna
+- Mila Pacompia ([MilaPacompiaM](https://github.com/MilaPacompiaM))
 
 
 ## Getting started
